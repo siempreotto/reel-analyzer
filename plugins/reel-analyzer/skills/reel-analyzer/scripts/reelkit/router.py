@@ -55,6 +55,7 @@ def _clean(url: str) -> str:
     path = parts.path
     if "instagram.com" in host:
         path = re.sub(r"/reels/", "/reel/", path)
+        query = []  # Instagram no necesita parámetros y cambia los de rastreo seguido (igsh, knvt, lqvp…)
     return urlunsplit(("https", host, path, urlencode(query), ""))
 
 

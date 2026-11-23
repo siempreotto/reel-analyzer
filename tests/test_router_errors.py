@@ -8,6 +8,8 @@ from reelkit.errors import ReelError
 @pytest.mark.parametrize("url,platform,vid,clean", [
     ("https://www.instagram.com/reel/DAbc123xyz/?igsh=MWQ1ZGUxMzBkMA==", "instagram", "DAbc123xyz",
      "https://instagram.com/reel/DAbc123xyz/"),
+    ("https://www.instagram.com/reel/Df79r9XNS6I/?knvt=NTc4MTIwNjQ2YQ==", "instagram", "Df79r9XNS6I",
+     "https://instagram.com/reel/Df79r9XNS6I/"),
     ("instagram.com/reels/DAbc123xyz", "instagram", "DAbc123xyz", "https://instagram.com/reel/DAbc123xyz"),
     ("https://www.instagram.com/someuser/reel/DAbc123xyz/", "instagram", "DAbc123xyz", None),
     ("https://youtube.com/shorts/aBcDeFgHiJk?si=xyz123", "youtube", "aBcDeFgHiJk", "https://youtube.com/shorts/aBcDeFgHiJk"),

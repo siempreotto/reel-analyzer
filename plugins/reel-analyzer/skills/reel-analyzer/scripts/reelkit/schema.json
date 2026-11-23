@@ -99,7 +99,8 @@
           "items": {
             "type": "object",
             "required": ["start", "end", "text"],
-            "properties": {"start": {"type": "number"}, "end": {"type": "number"}, "text": {"type": "string"}}
+            "properties": {"start": {"type": "number"}, "end": {"type": "number"}, "text": {"type": "string"},
+                           "palabras": {"type": "array", "items": {"type": "array", "minItems": 3, "maxItems": 3}}}
           }
         }
       }

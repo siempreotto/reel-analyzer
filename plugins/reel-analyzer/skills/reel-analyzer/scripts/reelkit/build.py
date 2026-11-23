@@ -23,7 +23,10 @@ def meta_from_info(info: dict, platform: str, url: str | None, probe: dict) -> d
     fecha = info.get("upload_date")
     if fecha and len(fecha) == 8:
         fecha = f"{fecha[:4]}-{fecha[4:6]}-{fecha[6:]}"
-    cuenta = info.get("uploader_id") or info.get("channel") or info.get("uploader")
+    # Instagram da en uploader_id un número interno; el @usuario viene en channel.
+    handles = [info.get(k) for k in ("uploader_id", "channel")]
+    handles = [str(h) for h in handles if h and not str(h).lstrip("@").isdigit()]
+    cuenta = handles[0] if handles else info.get("uploader")
     if cuenta and platform in ("instagram", "tiktok", "x") and not str(cuenta).startswith("@"):
         cuenta = "@" + str(cuenta)
     return {
@@ -44,13 +47,22 @@ def meta_from_info(info: dict, platform: str, url: str | None, probe: dict) -> d
 
 
 def _voice_between(segs: list[dict], a: float, b: float) -> str:
-    """Texto de los segmentos cuyo punto medio cae en [a, b)."""
+    """Lo que se dice en [a, b).
+
+    Con tiempos por palabra (Whisper) se reparte palabra por palabra, así una frase que
+    cruza varios cortes queda partida donde corresponde. Sin ellos (subtítulos), cada
+    segmento va a la escena donde empieza.
+    """
     out = []
     for s in segs:
-        mid = (s["start"] + s["end"]) / 2
-        if a <= mid < b:
+        words = s.get("palabras")
+        if words:
+            picked = [w[2] for w in words if a <= (w[0] + w[1]) / 2 < b]
+            if picked:
+                out.append("".join(picked).strip())
+        elif a <= s["start"] < b:
             out.append(s["text"])
-    return " ".join(out).strip()
+    return " ".join(x for x in out if x).strip()
 
 
 def assemble(meta: dict, scenes: list[tuple[float, float]], frames: list[Frame], audio: dict,

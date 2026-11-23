@@ -136,10 +136,16 @@ def whisper(video: Path, prompt: str = "", size: str = DEFAULT_MODEL) -> dict:
     model = _load_model(size)
     segments, info = model.transcribe(
         decode_audio(video), vad_filter=True, vad_parameters={"min_silence_duration_ms": 400},
-        beam_size=5, initial_prompt=(prompt[:200] or None), condition_on_previous_text=False,
+        beam_size=5, word_timestamps=True, initial_prompt=(prompt[:200] or None), condition_on_previous_text=False,
     )
-    segs = [{"start": round(s.start, 2), "end": round(s.end, 2), "text": s.text.strip()}
-            for s in segments if s.text.strip()]
+    segs = []
+    for s in segments:
+        if not s.text.strip():
+            continue
+        seg = {"start": round(s.start, 2), "end": round(s.end, 2), "text": s.text.strip()}
+        if s.words:
+            seg["palabras"] = [[round(w.start, 2), round(w.end, 2), w.word] for w in s.words]
+        segs.append(seg)
     return {"fuente": "whisper", "modelo": size, "idioma": info.language,
             "prob_idioma": round(info.language_probability, 2), "segmentos": segs}
 
