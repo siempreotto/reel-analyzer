@@ -8,6 +8,8 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from .errors import unsupported_url
 
 # Parámetros de rastreo que se quitan del link (no cambian el video).
+_WWW_HOSTS = {"tiktok.com", "instagram.com", "youtube.com", "facebook.com"}
+
 _TRACKING = {
     "igsh", "igshid", "si", "feature", "is_from_webapp", "sender_device", "sender_web_id", "_r", "_t",
     "mibextid", "rdid", "s", "t", "ref", "ref_src", "share_id", "share_app_id", "lang", "checksum",
@@ -56,6 +58,12 @@ def _clean(url: str) -> str:
     if "instagram.com" in host:
         path = re.sub(r"/reels/", "/reel/", path)
         query = []  # Instagram no necesita parámetros y cambia los de rastreo seguido (igsh, knvt, lqvp…)
+    if host == "tiktok.com" and "/video/" in path:
+        query = []  # q, t, is_from_webapp…: solo rastreo
+    # Host canónico: el extractor de TikTok de yt-dlp solo reconoce www.tiktok.com,
+    # y con el host desnudo cae al extractor genérico ("Unsupported URL").
+    if host in _WWW_HOSTS:
+        host = "www." + host
     return urlunsplit(("https", host, path, urlencode(query), ""))
 
 

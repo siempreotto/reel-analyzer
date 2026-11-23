@@ -19,13 +19,23 @@ def _int(v):
         return None
 
 
+_HANDLE_FIELDS = {
+    "instagram": ("channel", "uploader_id"),
+    "tiktok": ("uploader", "uploader_id"),
+    "youtube": ("uploader_id", "channel_handle"),
+    "x": ("uploader_id",),
+}
+
+
 def meta_from_info(info: dict, platform: str, url: str | None, probe: dict) -> dict:
     fecha = info.get("upload_date")
     if fecha and len(fecha) == 8:
         fecha = f"{fecha[:4]}-{fecha[4:6]}-{fecha[6:]}"
-    # Instagram da en uploader_id un número interno; el @usuario viene en channel.
-    handles = [info.get(k) for k in ("uploader_id", "channel")]
-    handles = [str(h) for h in handles if h and not str(h).lstrip("@").isdigit()]
+    # yt-dlp guarda el @usuario en un campo distinto según la plataforma, y en otros pone
+    # un id numérico o el nombre visible: Instagram → channel; TikTok → uploader.
+    order = _HANDLE_FIELDS.get(platform, ("uploader_id", "channel", "uploader"))
+    handles = [str(info[k]) for k in order if info.get(k)]
+    handles = [h for h in handles if not h.lstrip("@").isdigit() and " " not in h]
     cuenta = handles[0] if handles else info.get("uploader")
     if cuenta and platform in ("instagram", "tiktok", "x") and not str(cuenta).startswith("@"):
         cuenta = "@" + str(cuenta)
@@ -46,16 +56,32 @@ def meta_from_info(info: dict, platform: str, url: str | None, probe: dict) -> d
     }
 
 
+def _spread_words(seg: dict) -> list:
+    """Subtítulos sin tiempos por palabra: reparte las palabras a lo largo del segmento,
+    proporcional a su largo, para que una frase que cruza cortes se parta en el corte."""
+    tokens = seg["text"].split()
+    if not tokens:
+        return []
+    a, b = seg["start"], max(seg["end"], seg["start"] + 0.01)
+    total = sum(len(t) + 1 for t in tokens)
+    out, acc = [], 0
+    for t in tokens:
+        w0 = a + (b - a) * acc / total
+        acc += len(t) + 1
+        out.append([w0, a + (b - a) * acc / total, " " + t])
+    return out
+
+
 def _voice_between(segs: list[dict], a: float, b: float) -> str:
     """Lo que se dice en [a, b).
 
     Con tiempos por palabra (Whisper) se reparte palabra por palabra, así una frase que
     cruza varios cortes queda partida donde corresponde. Sin ellos (subtítulos), cada
-    segmento va a la escena donde empieza.
+    segmento se reparte en proporción al largo de cada palabra.
     """
     out = []
     for s in segs:
-        words = s.get("palabras")
+        words = s.get("palabras") or _spread_words(s)
         if words:
             picked = [w[2] for w in words if a <= (w[0] + w[1]) / 2 < b]
             if picked:

@@ -106,6 +106,23 @@ def test_instagram_html_retries_without_cookies(monkeypatch, tmp_path):
     assert calls == [["--cookies-from-browser", "chrome"], []]
 
 
+def test_generic_failure_retried_once(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_ytdlp(src, workdir, auth):
+        calls.append(1)
+        if len(calls) == 1:
+            return None, {}, "ERROR: unable to download video data: HTTP Error 403: Forbidden"
+        v = workdir / "video.mp4"
+        v.write_bytes(b"x")
+        return v, {"id": "x"}, ""
+    monkeypatch.setattr(dl, "_ytdlp", fake_ytdlp)
+    monkeypatch.setattr(dl, "RETRY_DELAY_S", 0)
+    from reelkit.router import route
+    video, _ = dl.download(route("https://youtube.com/shorts/aBcDeFgHiJk"), tmp_path / "w")
+    assert video.name == "video.mp4" and len(calls) == 2
+
+
 def test_parse_vtt_rolling_captions(tmp_path):
     vtt = tmp_path / "subs.es.vtt"
     vtt.write_text(

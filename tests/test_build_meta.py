@@ -22,7 +22,22 @@ def test_voice_split_by_words_across_cuts():
     assert _voice_between([seg], 6.67, 9.18) == "world"
 
 
-def test_voice_without_words_goes_to_start_scene():
-    seg = {"start": 3.8, "end": 9.2, "text": "frase larga"}
-    assert _voice_between([seg], 3.04, 4.21) == "frase larga"
-    assert _voice_between([seg], 6.30, 6.67) == ""
+def test_tiktok_account_uses_handle_not_display_name():
+    info = {"id": "X", "uploader": "maverickgpt", "uploader_id": "6812345", "channel": "Maverick Maltin | AI"}
+    assert meta_from_info(info, "tiktok", None, PROBE)["cuenta"] == "@maverickgpt"
+
+
+def test_subtitle_segment_spread_across_cut():
+    seg = {"start": 0.0, "end": 4.0, "text": "uno dos tres cuatro"}
+    assert _voice_between([seg], 0.0, 2.0) == "uno dos"
+    assert _voice_between([seg], 2.0, 4.0) == "tres cuatro"
+
+
+def test_vocab_prompt_has_no_emojis_or_sentences():
+    from reelkit.transcribe import clean_text, vocab_prompt
+    cap = "¿Tus webs creadas con Claude siguen pareciendo genéricas? 👀‼️ 1️⃣ Emil Kowalski + Impeccable → reglas"
+    p = vocab_prompt("@migue.baena", cap)
+    assert "1️⃣" not in p and "👀" not in p and "¿Tus" not in p
+    for term in ("migue.baena", "Claude", "Emil", "Kowalski", "Impeccable"):
+        assert term in p
+    assert clean_text("2️⃣ Claude puede crear") == "2 Claude puede crear"

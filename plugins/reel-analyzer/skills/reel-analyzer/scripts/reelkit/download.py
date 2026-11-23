@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import glob
 import json
+import time
 import os
 import sys
 from pathlib import Path
@@ -108,6 +109,15 @@ def _gdl_to_ytdlp_info(m: dict, src: Source) -> dict:
     }
 
 
+RETRY_DELAY_S = 2.0
+
+
+def _clear_partials(workdir: Path) -> None:
+    for f in workdir.glob("video*"):
+        if f.is_file():
+            f.unlink(missing_ok=True)
+
+
 def download(src: Source, workdir: Path, cookies_from_browser: str | None = None,
              cookies_file: str | None = None) -> tuple[Path, dict]:
     """Descarga el video a workdir/video.mp4 y devuelve (ruta, info de yt-dlp)."""
@@ -121,6 +131,15 @@ def download(src: Source, workdir: Path, cookies_from_browser: str | None = None
     first = classify_ytdlp_error(err, src.platform, used_cookies)
     if first.code == "NETWORK_BLOCKED":
         raise first
+
+    if first.code == "DOWNLOAD_FAILED":
+        # Error sin causa reconocible: suele ser pasajero (un 403 de un fragmento de YouTube).
+        time.sleep(RETRY_DELAY_S)
+        _clear_partials(workdir)
+        video, info, err = _ytdlp(src, workdir, auth)
+        if video:
+            return video, info
+        first = classify_ytdlp_error(err, src.platform, used_cookies)
 
     if first.code == "EXTRACTOR_BROKEN" and _self_update_ytdlp():
         video, info, err = _ytdlp(src, workdir, auth)

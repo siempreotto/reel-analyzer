@@ -140,14 +140,48 @@ def whisper(video: Path, prompt: str = "", size: str = DEFAULT_MODEL) -> dict:
     )
     segs = []
     for s in segments:
-        if not s.text.strip():
+        text = clean_text(s.text)
+        if not text:
             continue
-        seg = {"start": round(s.start, 2), "end": round(s.end, 2), "text": s.text.strip()}
+        seg = {"start": round(s.start, 2), "end": round(s.end, 2), "text": text}
         if s.words:
-            seg["palabras"] = [[round(w.start, 2), round(w.end, 2), w.word] for w in s.words]
+            words = [[round(w.start, 2), round(w.end, 2), clean_text(w.word)] for w in s.words]
+            seg["palabras"] = [[a, b, " " + w] for a, b, w in words if w]
         segs.append(seg)
     return {"fuente": "whisper", "modelo": size, "idioma": info.language,
             "prob_idioma": round(info.language_probability, 2), "segmentos": segs}
+
+
+_EMOJI = re.compile("[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F\u20E3\u200D]")
+_STOP = {w.lower() for w in """a al ante como con de del el en es la las lo los mas más me mi mis no o para pero
+por que qué se si sí su sus te tu tus un una uno y ya and are as at be but by for from how i if in is it its my
+of on or so that the this to what when why with you your""".split()}
+
+
+def vocab_prompt(cuenta: str | None, caption: str | None, limit: int = 25) -> str:
+    """Prompt para Whisper con solo vocabulario (cuenta, marcas, nombres propios).
+
+    Si se le pasa el caption tal cual, Whisper copia su estilo: emojis como «2️⃣» o el
+    Title Case de un título. Una lista de términos sin frases no tiene nada que copiar.
+    """
+    text = _EMOJI.sub(" ", caption or "")
+    terms: list[str] = []
+    if cuenta:
+        terms.append(cuenta.lstrip("@"))
+    for tok in re.findall(r"[#@]?[\w][\w.\-+]*", text):
+        word = tok.lstrip("#@").strip(".-")
+        if len(word) < 2 or word.lower() in _STOP:
+            continue
+        if any(c.isupper() for c in word) or any(c.isdigit() for c in word) and any(c.isalpha() for c in word):
+            if word not in terms:
+                terms.append(word)
+        if len(terms) >= limit:
+            break
+    return ", ".join(terms) + "." if terms else ""
+
+
+def clean_text(text: str) -> str:
+    return re.sub(r"\s{2,}", " ", _EMOJI.sub("", text)).strip()
 
 
 def transcribe(video: Path, has_audio: bool, subtitle: Path | None = None, prompt: str = "",

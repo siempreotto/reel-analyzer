@@ -27,7 +27,7 @@ from reelkit.download import _auth_args, download, fetch_subtitles, local_file  
 from reelkit.errors import ReelError  # noqa: E402
 from reelkit.probe import probe, require_ffmpeg  # noqa: E402
 from reelkit.router import Source, route, safe_id  # noqa: E402
-from reelkit.transcribe import transcribe  # noqa: E402
+from reelkit.transcribe import transcribe, vocab_prompt  # noqa: E402
 
 HOME = Path(os.environ.get("REEL_ANALYZER_HOME", Path.home() / ".reel-analyzer"))
 AVISO = ("AVISO DE USO RESPONSABLE: reel-analyzer sirve para estudiar el FORMATO de un video y escribir un guion "
@@ -92,7 +92,7 @@ def analyze_one(source: str, is_file: bool, out_root: Path, mode: str, keep: boo
     print("[reelkit] midiendo audio…", file=sys.stderr)
     au = audio_mod.analyze(video, dur, pr["tiene_audio"])
     print("[reelkit] transcribiendo…", file=sys.stderr)
-    prompt = " ".join(x for x in [meta.get("cuenta") or "", (meta.get("caption") or "")[:150]] if x)
+    prompt = vocab_prompt(meta.get("cuenta"), meta.get("caption"))
     tr, aviso_tr = transcribe(video, pr["tiene_audio"], subtitle, prompt, enabled=do_transcribe)
     if aviso_tr:
         avisos.append(aviso_tr)
