@@ -1,0 +1,52 @@
+name: Actualizar yt-dlp
+
+# Cada lunes: si hay una versión nueva de yt-dlp en PyPI, sube el pin, corre los tests
+# y abre un PR. Las plataformas cambian seguido y yt-dlp las sigue de cerca.
+on:
+  schedule:
+    - cron: "0 13 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.bump.outputs.changed }}
+      version: ${{ steps.bump.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: bump
+        run: |
+          REQ=plugins/reel-analyzer/skills/reel-analyzer/scripts/requirements.txt
+          LATEST=$(curl -fsSL https://pypi.org/pypi/yt-dlp/json | python -c "import json,sys;print(json.load(sys.stdin)['info']['version'])")
+          CURRENT=$(sed -n 's/^yt-dlp\[[^]]*\]==\([0-9.]*\).*/\1/p' "$REQ")
+          echo "actual=$CURRENT última=$LATEST"
+          if [ "$LATEST" != "$CURRENT" ]; then
+            sed -i "s/^\(yt-dlp\[[^]]*\]==\)[0-9.]*/\1$LATEST/" "$REQ"
+            sed -i "s/^\(gallery-dl==\)[0-9.]*/\1$(curl -fsSL https://pypi.org/pypi/gallery-dl/json | python -c "import json,sys;print(json.load(sys.stdin)['info']['version'])")/" "$REQ"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "version=$LATEST" >> "$GITHUB_OUTPUT"
+      - name: Tests con la versión nueva
+        if: steps.bump.outputs.changed == 'true'
+        run: |
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          pip install -r plugins/reel-analyzer/skills/reel-analyzer/scripts/requirements.txt pytest
+          REEL_ANALYZER_HOME=$RUNNER_TEMP/ra python -m pytest -q
+      - name: Abrir PR
+        if: steps.bump.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: deps/yt-dlp-${{ steps.bump.outputs.version }}
+          title: "Subir yt-dlp a ${{ steps.bump.outputs.version }}"
+          commit-message: "Subir yt-dlp a ${{ steps.bump.outputs.version }} (y gallery-dl a su última versión)"
+          body: "Actualización semanal automática. Los tests pasaron con la versión nueva."

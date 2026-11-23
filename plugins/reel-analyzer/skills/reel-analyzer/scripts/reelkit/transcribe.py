@@ -25,7 +25,12 @@ RELEASE_URL = os.environ.get(
     "REEL_WHISPER_MODEL_URL",
     "https://github.com/{repo}/releases/download/whisper-models/faster-whisper-{size}.tar.gz",
 )
-RELEASE_REPO = os.environ.get("REEL_ANALYZER_REPO", "")
+def _default_repo() -> str:
+    from . import REPO
+    return "" if "<" in REPO else REPO
+
+
+RELEASE_REPO = os.environ.get("REEL_ANALYZER_REPO") or _default_repo()
 
 _TS = re.compile(r"(?:(\d+):)?(\d{1,2}):(\d{2})[.,](\d{3})\s*-->\s*(?:(\d+):)?(\d{1,2}):(\d{2})[.,](\d{3})")
 _TAG = re.compile(r"<[^>]+>")

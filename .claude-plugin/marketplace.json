@@ -1,0 +1,17 @@
+{
+  "name": "reel-analyzer",
+  "description": "Desglose escena por escena de reels, Shorts y TikToks y guion original para replicar el formato, en español.",
+  "owner": {
+    "name": "Otto Salvador"
+  },
+  "plugins": [
+    {
+      "name": "reel-analyzer",
+      "source": "./plugins/reel-analyzer",
+      "description": "Pega el link de un reel, Short o TikTok (o un MP4) y recibe el desglose escena por escena y un guion original para tu marca.",
+      "version": "0.1.0",
+      "category": "productivity",
+      "tags": ["video", "reels", "tiktok", "shorts", "guion", "marketing", "español"]
+    }
+  ]
+}

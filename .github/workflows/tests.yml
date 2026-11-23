@@ -1,0 +1,39 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: ffmpeg (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+      - name: ffmpeg (macOS)
+        if: runner.os == 'macOS'
+        run: brew list ffmpeg >/dev/null 2>&1 || brew install ffmpeg
+      - name: Dependencias
+        run: |
+          python -m pip install -U pip
+          pip install -r plugins/reel-analyzer/skills/reel-analyzer/scripts/requirements.txt pytest
+      - name: pytest
+        env:
+          REEL_ANALYZER_HOME: ${{ runner.temp }}/ra
+        run: python -m pytest -q
+      - name: El zip de la skill se arma
+        run: bash scripts/build_zip.sh

@@ -1,0 +1,10 @@
+{
+  "name": "reel-analyzer",
+  "version": "0.1.0",
+  "description": "Desglosa reels, Shorts y TikToks escena por escena (visual, texto en pantalla, voz y audio no verbal) y escribe un guion original para replicar el formato con tu marca, en español.",
+  "author": {
+    "name": "Otto Salvador"
+  },
+  "license": "MIT",
+  "keywords": ["video", "reels", "instagram", "tiktok", "youtube-shorts", "guion", "yt-dlp", "whisper", "español"]
+}
