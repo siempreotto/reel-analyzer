@@ -108,7 +108,7 @@ def plan_times(scenes: list[tuple[float, float]], duration: float, mode: str) ->
     plan.sort(key=lambda x: (x[0], x[1] != "hook"))
     dedup: list[tuple[float, str, int | None]] = []
     for item in plan:
-        if dedup and abs(dedup[-1][0] - item[0]) < 0.2 and item[1] != "hook":
+        if dedup and abs(dedup[-1][0] - item[0]) < 0.75 and item[1] != "hook":
             continue
         if dedup and abs(dedup[-1][0] - item[0]) < 0.01:
             continue
