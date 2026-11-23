@@ -19,11 +19,11 @@ Todo en español. El video se procesa en tu computadora y se borra al terminar.
 En una terminal:
 
 ```bash
-claude plugin marketplace add <usuario>/reel-analyzer
+claude plugin marketplace add siempreotto/reel-analyzer
 claude plugin install reel-analyzer@reel-analyzer
 ```
 
-O dentro de Claude Code: `/plugin marketplace add <usuario>/reel-analyzer` y después `/plugin`
+O dentro de Claude Code: `/plugin marketplace add siempreotto/reel-analyzer` y después `/plugin`
 para instalar **reel-analyzer** desde el panel.
 
 La primera vez que lo uses, la skill instala sola lo que necesita en `~/.reel-analyzer/`. Tarda
@@ -35,7 +35,7 @@ unos minutos. Instala:
 
 ### Opción B: Claude en la web o la app (sin instalar nada técnico)
 
-1. Descarga [`reel-analyzer-skill.zip`](https://github.com/<usuario>/reel-analyzer/releases/latest)
+1. Descarga [`reel-analyzer-skill.zip`](https://github.com/siempreotto/reel-analyzer/releases/latest)
    desde los Releases.
 2. En claude.ai, ve a **Configuración → Capacidades → Skills**, presiona **Subir skill** y elige
    el zip. Necesitas la ejecución de código activada.
@@ -138,12 +138,8 @@ bash plugins/reel-analyzer/skills/reel-analyzer/scripts/setup.sh
 
 - `REEL_TEST_WHISPER=1` activa la prueba con Whisper real (macOS).
 - `bash scripts/build_zip.sh` arma `dist/reel-analyzer-skill.zip` para claude.ai.
-- `bash scripts/publish_whisper_models.sh <usuario>/reel-analyzer` publica los pesos de Whisper como assets de un release. Sirve de respaldo donde Hugging Face está bloqueado.
+- `bash scripts/publish_whisper_models.sh siempreotto/reel-analyzer` publica los pesos de Whisper como assets de un release. Sirve de respaldo donde Hugging Face está bloqueado.
 
-### Antes de publicar
-
-1. Reemplaza `<usuario>` por tu usuario de GitHub en este README y en `REPO` de `scripts/reelkit/__init__.py`.
-2. Corre `claude plugin validate .` y `claude plugin validate ./plugins/reel-analyzer`.
-3. Crea un release con `dist/reel-analyzer-skill.zip` adjunto.
+Para publicar una versión nueva: `claude plugin validate .`, `bash scripts/build_zip.sh` y un release con el zip adjunto.
 
 Licencia MIT. Ver [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
