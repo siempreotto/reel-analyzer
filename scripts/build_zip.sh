@@ -10,7 +10,8 @@ trap 'rm -rf "$STAGE"' EXIT
 
 mkdir -p "$ROOT/dist"
 cp -R "$SKILL" "$STAGE/reel-analyzer"
-find "$STAGE" -name "__pycache__" -type d -prune -exec rm -rf {} + -o -name ".DS_Store" -delete
+find "$STAGE" -name "__pycache__" -type d -prune -exec rm -rf {} +
+find "$STAGE" -name ".DS_Store" -type f -exec rm -f {} +
 
 # claude.ai limita la description a 200 caracteres (Claude Code admite más): en el zip va la corta.
 SHORT="$(tr -d '\n' < "$ROOT/scripts/descripcion_corta.txt")"
