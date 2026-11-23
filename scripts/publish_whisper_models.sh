@@ -23,7 +23,7 @@ for SIZE in "${SIZES[@]}"; do
 done
 
 gh release view whisper-models --repo "$REPO" >/dev/null 2>&1 || \
-  gh release create whisper-models --repo "$REPO" --title "Modelos de Whisper (respaldo)" \
+  gh release create whisper-models --repo "$REPO" --latest=false --title "Modelos de Whisper (respaldo)" \
     --notes "Pesos de faster-whisper (modelos de Systran, licencia MIT) para entornos sin acceso a Hugging Face."
 gh release upload whisper-models --repo "$REPO" --clobber "$WORK"/faster-whisper-*.tar.gz
 echo "Listo. reelkit los baja de https://github.com/$REPO/releases/download/whisper-models/"

@@ -75,6 +75,17 @@ def _models_dir() -> Path:
     return Path(os.environ.get("REEL_ANALYZER_HOME", Path.home() / ".reel-analyzer")) / "models"
 
 
+def _ssl_context():
+    """Python de python.org o de Homebrew a veces no ve los certificados del sistema
+    (CERTIFICATE_VERIFY_FAILED); certifi viene con requests, que instala yt-dlp."""
+    import ssl
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except ImportError:
+        return ssl.create_default_context()
+
+
 def _from_release(size: str) -> str | None:
     if "{repo}" in RELEASE_URL and not RELEASE_REPO:
         return None
@@ -85,7 +96,7 @@ def _from_release(size: str) -> str | None:
     try:
         dest.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile(suffix=".tar.gz", delete=False) as tmp:
-            with urllib.request.urlopen(url, timeout=120) as resp:
+            with urllib.request.urlopen(url, timeout=120, context=_ssl_context()) as resp:
                 while chunk := resp.read(1 << 20):
                     tmp.write(chunk)
         with tarfile.open(tmp.name) as tar:
